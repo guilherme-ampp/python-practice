@@ -29,17 +29,15 @@
     $(function () {
         $('#connectForm').submit(function(e) {
           e.preventDefault(); // prevents page reloading
-          var socket = io('/chat');
+          const socket = io.connect('/chat');
           socket.emit('chat join', {username: $('#username').val()});
 
           socket.on('chat message', function(msg){
               $('#messages').append($('<li>').text(msg));
           });
           socket.on('connect', function() {
-              // echo from the client
               $('#messageForm').css('visibility', 'visible');
               $('#connectForm').css('visibility', 'hidden');
-              socket.emit('echo', {message: 'I\'m connected!'});
           });
 
           $('#messageForm').submit(function(e){
@@ -52,12 +50,13 @@
           return false;
         });
 
-        var counter_socket = io('/counter');
-        counter_socket.on('count', function(data) {
-            console.log('Listening to the backend counter: ' + data);
-        });
+        const counter_socket = io.connect('/count');
         counter_socket.on('connect', function() {
             console.log('Connected to the backend counter');
+        });
+        counter_socket.on('count', function(data) {
+            console.log('Listening to the backend counter: ' + data);
+            $('#messages').append($('<li>').text('counter: ' + data));
         });
     });
     </script>

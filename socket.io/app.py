@@ -1,15 +1,25 @@
 import json
-import service
 from flask import Flask, render_template
 from flask_socketio import SocketIO, send, emit, join_room, leave_room
 from flask import render_template, request
+import threading
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'
 socketio = SocketIO(app)
 
 connected_clients = {}
-backend_service = None
+
+global stop_event
+stop_event = threading.Event()
+
+def long_running_task():
+    for _ in range(1000):
+        socketio.emit('count', json.dumps({'count': _}), namespace='/count')
+        socketio.sleep(1)
+        print('Counting', _)
+        if stop_event.is_set():
+            break
 
 
 @app.route('/', methods=['GET'])
@@ -34,7 +44,7 @@ def handle_push_message(client_id):
 
 @socketio.on('connect', namespace='/chat')
 def handle_chat_connect():
-    print('received connect: ' + str(request.sid))
+    print('Received connect: ' + str(request.sid))
 
 
 @socketio.on('disconnect', namespace='/chat')
@@ -45,12 +55,12 @@ def handle_chat_disconnect():
         del connected_clients[request.sid]
         socketio.emit('chat message', '{} has left the chat'.format(username), 
                       namespace='/chat', broadcast=True)
-    print('received disconnect: ' + str(request.sid))
+    print('Received disconnect: ' + str(request.sid))
 
 
 @socketio.on('chat join', namespace='/chat')
 def handle_chat_join(data):
-    print('joined chat: ' + str(data))
+    print('Joined chat: ' + str(data))
     if data and 'username' in data:
         username = data['username']
         connected_clients[request.sid] = username
@@ -62,38 +72,37 @@ def handle_chat_join(data):
 
 @socketio.on('chat message', namespace='/chat')
 def handle_chat_message(data):
-    print('received chat message: ' + str(data))
+    print('Received chat message: ' + str(data))
     if data:
         socketio.emit('chat message', "{}: {}".format(data['username'], data['message']),
                       namespace='/chat', broadcast=True)
 
 
-@socketio.on('connect', namespace='/counter')
+@socketio.on('connect', namespace='/count')
 def handle_counter_connect():
-    print('listening to the counter: ' + str(request.sid))
+    if not connected_clients:
+        global stop_event
+        stop_event = threading.Event()
+        t = socketio.start_background_task(long_running_task)
+        print('Listening to the counter: {} on Thread[{}]'.format(request.sid, t))
+    else:
+        print('Listening to the counter: {}'.format(request.sid))
+    connected_clients[request.sid] = request.sid
 
 
-@socketio.on('disconnect', namespace='/counter')
+@socketio.on('disconnect', namespace='/count')
 def handle_counter_disconnect():
-    print('stopped listening to the counter: ' + str(request.sid))
-
-
-@socketio.on('echo', namespace='/chat')
-def handle_echo(data):
-    print('received echo: ' + str(data))
+    if request.sid in connected_clients:
+        del connected_clients[request.sid]
+    if not connected_clients:
+        stop_event.set()
+    print('Stopped listening to the counter: ' + str(request.sid))
 
 
 @app.teardown_appcontext
 def _teardown(*args, **kwargs):
     yield
-
-    backend_service.stop()
+    stop_event.set()
 
 if __name__ == '__main__':
-    def _callback_counter(json_data):
-        print('emit count:', json_data)
-        socketio.emit('count', json_data, namespace='/counter',
-                      broadcast=True)
-
-    backend_service = service.LongRunningTask(_callback_counter)
     socketio.run(app)
