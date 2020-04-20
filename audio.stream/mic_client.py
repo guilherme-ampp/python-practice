@@ -6,7 +6,7 @@ import sys
 FORMAT = pyaudio.paInt16
 CHANNELS = 1
 RATE = 44100
-CHUNK = int(200)
+CHUNK = 4096
 
 def client_main(address, port):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

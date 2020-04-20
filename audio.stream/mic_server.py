@@ -7,7 +7,7 @@ import select
 FORMAT = pyaudio.paInt16
 CHANNELS = 1
 RATE = 44100
-CHUNK = int(200)
+CHUNK = 4096
 
 def list_devices():
     p = pyaudio.PyAudio()
@@ -40,7 +40,6 @@ def server_main(input_index=None, port=4444):
     stream = audio.open(format=FORMAT, channels=CHANNELS, rate=RATE, input=True, 
                         frames_per_buffer=CHUNK, stream_callback=callback,
                         input_device_index=input_index)
-    # stream.start_stream()
     print("Streaming input[{}] at port [{}]".format(input_index, port))
 
     read_list = [serversocket]
