@@ -16,5 +16,5 @@ References:
 References:
 <ul>
   <li><a href="https://pypi.org/project/PyAudio/">PyAudio @ pypi.org</a></li>
-  <li>a< href="http://www.portaudio.com/">Portaudio</a></li>
+  <li><a href="http://www.portaudio.com/">Portaudio</a></li>
 </ul>
