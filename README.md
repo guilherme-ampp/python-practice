@@ -10,3 +10,11 @@ References:
   <li><a href="https://socket.io/get-started/chat/" target="_blank">Socket.io - Get Started</a></li>
   <li><a href="https://github.com/shanealynn/async_flask" target="_blank">Shanealynn's Async_flask</a></li>
 </ul>
+
+<h2>audio.stream/</h2>
+<p>Experimenting with PyAudio and audio streaming from a remote input soure.
+References:
+<ul>
+  <li><a href="https://pypi.org/project/PyAudio/">PyAudio @ pypi.org</a></li>
+  <li>a< href="http://www.portaudio.com/">Portaudio</a></li>
+</ul>
